@@ -57,3 +57,7 @@ Databento: `.env`에 `DATABENTO_API_KEY=db-...` (`.env.example` 참고). 4단계
 실행: `python src/tails/00_tail_features.py` → `python src/hyp/00_event_windows.py` → `python src/tails/run_all_tails.py`
 특징량 정의는 `00_tail_features.py` 머리말. 가설 T1~T11은 파일별 머리말에 근거·모형·주 검정
 주 검정 21개(사전 고정) 한 묶음 BH, 보조·추가 종속변수(ES·SR3)는 별도 BH (`tail_summary_main.csv`, `tail_summary_secondary.csv`)
+
+## Goel (2026) 재현 (src/replication/goel2026_iqr.py)
+Goel, "Measuring macroeconomic surprise magnitude with prediction markets", IREF 110 (2026) 105577
+헤드라인 CPI |발표치−컨센서스| ~ Kalshi 내재 IQR, HC1 + wild-bootstrap-t + 순열 p. 정규화·시점·이산 IQR·통합·기간 변형 비교
