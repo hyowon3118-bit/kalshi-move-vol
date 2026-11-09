@@ -1,0 +1,4 @@
+hyp,test,target,sample,term,n,coef,se,p,alternative,r2,main,note
+T9,|S| ~ multimodal + W,-,pooled,multimodal,176,0.048425821423529934,0.0679903187011159,0.23815627882199375,greater,0.05228882926883016,True,
+T9,|r_win| ~ multimodal + |S|,ZT,pooled,multimodal,183,-0.27075283784558835,1.415209697924204,0.5758611471219041,greater,0.10341356878063301,True,
+T9,|r_win| ~ multimodal + |S|,ZN,pooled,multimodal,183,-0.4211416021860751,4.058923348102651,0.5413188938521405,greater,0.07437494994975835,False,

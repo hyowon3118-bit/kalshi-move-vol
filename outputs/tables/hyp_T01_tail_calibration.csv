@@ -1,0 +1,4 @@
+hyp,test,target,sample,term,n,coef,se,p,alternative,r2,main,note
+T1,T1a hit(F±σ) − tail1 (h=1),-,pooled,Intercept,183,-0.04149169473307342,0.025813703352381014,0.05398864175057129,less,2.220446049250313e-16,True,실현 10.9% vs Kalshi 15.1%
+T1,T1a hit(F±σ) − tail1 (h=7),-,pooled,Intercept,185,-0.06536914555607087,0.026101179731435938,0.006132066385145659,less,0.0,True,실현 10.8% vs Kalshi 17.3%
+T1,T1b 확률<10% 구간 hit − p (h=1),-,pooled,Intercept,626,0.00622950835142509,0.0072323912075649465,0.8054730911260299,less,0.0,True,구간 626개: 실현 4.47% vs Kalshi 3.85%

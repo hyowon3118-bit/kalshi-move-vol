@@ -52,3 +52,8 @@ Databento: `.env`에 `DATABENTO_API_KEY=db-...` (`.env.example` 참고). 4단계
 | hF_skew_direction.py | 분포 왜도 방향으로 발표치 | 선행연구 없음 ※ |
 
 주 검정 16개를 한꺼번에 Benjamini–Hochberg 보정 (`outputs/tables/hyp_summary.csv`)
+
+## 꼬리·비매끄러움 가설 (src/tails, 2026-11-09)
+실행: `python src/tails/00_tail_features.py` → `python src/hyp/00_event_windows.py` → `python src/tails/run_all_tails.py`
+특징량 정의는 `00_tail_features.py` 머리말. 가설 T1~T11은 파일별 머리말에 근거·모형·주 검정
+주 검정 21개(사전 고정) 한 묶음 BH, 보조·추가 종속변수(ES·SR3)는 별도 BH (`tail_summary_main.csv`, `tail_summary_secondary.csv`)

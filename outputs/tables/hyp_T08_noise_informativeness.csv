@@ -1,0 +1,3 @@
+hyp,test,target,sample,term,n,coef,se,p,alternative,r2,main,note
+T8,S ~ Gap*viol_raw_z,-,pooled,Gap:viol_raw_z,183,-0.22054760067483567,0.10970847310746351,0.022199406637789118,less,0.15271228818240745,True,
+T8,S ~ Gap*rough_z,-,pooled,Gap:rough_z,183,-0.141308020127018,0.06418966173104945,0.01385336432009608,less,0.1551892367139741,False,
