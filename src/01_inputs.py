@@ -26,6 +26,10 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
 
     log.info("[1/2] Kalshi 분포 복사 (원본: %s)", src)
+    snap = src / "data" / "interim" / "kalshi_release_snapshot.parquet"
+    if snap.exists():
+        shutil.copy2(snap, out / snap.name)
+        log.info("  kalshi_release_snapshot.parquet (발표 직전 60분 IQR): %d행", len(pd.read_parquet(snap)))
     for name in ["kalshi_dist.parquet", "kalshi_moments.parquet", "kalshi_events.parquet"]:
         f = src / "data" / "interim" / name
         if not f.exists():

@@ -29,6 +29,9 @@
 입력: data/input/event_panel.parquet, data/event_windows.csv (src/hyp/00_event_windows.py), data/input/move_daily.csv
 출력: outputs/tables/iqr_assets.csv, outputs/figures/iqr_assets_main.png
 실행: python src/hyp/00_event_windows.py → python src/iqr_assets/iqr_assets.py
+      2단계: python src/iqr_assets/iqr_assets.py --iqr snapshot
+        IQR = 발표 직전 60분 마지막 체결가로 만든 Goel 방식 IQR (fixers26-1research src/clean/03_release_snapshot.py)
+        주 검정·보조 검정 구성은 1단계와 같음 (S6만 일봉 7일 전 IQR 그대로). 출력 파일명 끝에 _snapshot
 """
 from __future__ import annotations
 
@@ -70,11 +73,15 @@ def perm_p(y, x):
     return float((np.abs(bs) >= abs(b)).mean())
 
 
-def load(h: int) -> pd.DataFrame:
+def load(h: int, iqr: str = "daily") -> pd.DataFrame:
     p = pd.read_parquet(DATA / "input" / "event_panel.parquet")
     p = p[p["h"] == h].copy()
     p["release_date_actual"] = pd.to_datetime(p["release_date_actual"])
     p["iqr"] = p["q75"] - p["q25"]
+    if iqr == "snapshot":
+        snap = pd.read_parquet(DATA / "input" / "kalshi_release_snapshot.parquet")
+        p = p.drop(columns="iqr").merge(snap[["event_ticker", "goel_iqr", "stale_share"]].rename(columns={"goel_iqr": "iqr"}),
+                                        on="event_ticker", how="left")
     p["absAF"] = (p["A"] - p["F"]).abs()
     p["iqr_z"] = p.groupby("series")["iqr"].transform(lambda s: (s - s.mean()) / s.std())
     w = pd.read_csv(DATA / "event_windows.csv", parse_dates=["date"])
@@ -105,16 +112,22 @@ def ols(name, d, y, x, log, controls="", cluster=False, boot=False):
 
 
 def main() -> None:
-    log = get_logger("iqr_assets")
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--iqr", default="daily", choices=["daily", "snapshot"])
+    mode = ap.parse_args().iqr
+    sfx = "" if mode == "daily" else "_snapshot"
+    log = get_logger(f"iqr_assets{sfx}")
     TABLES.mkdir(parents=True, exist_ok=True)
     FIGURES.mkdir(parents=True, exist_ok=True)
-    e1, e7 = load(1), load(7)
+    e1, e7 = load(1, mode), load(7)
+    log.info("IQR 기준: %s", "발표 전날 일봉" if mode == "daily" else "발표 직전 60분 마지막 체결가 (Goel 방식)")
     cpi1 = e1[e1["series"] == "KXCPI"]
     log.info("헤드라인 CPI 발표 %d건 (%s ~ %s), IQR 있는 것 %d", len(cpi1), cpi1["release_date_actual"].min().date(),
              cpi1["release_date_actual"].max().date(), int(cpi1["iqr"].notna().sum()))
 
     log.info("[1/3] 주 검정")
-    main_r, dmain = ols("MAIN 헤드라인CPI |r_win ZT| ~ IQR (h=1)", cpi1, "abs_ZT_win", "iqr", log, boot=True)
+    main_r, dmain = ols(f"MAIN 헤드라인CPI |r_win ZT| ~ IQR ({mode})", cpi1, "abs_ZT_win", "iqr", log, boot=True)
     main_r["family"] = "main"
 
     log.info("[2/3] 보조 검정")
@@ -135,7 +148,7 @@ def main() -> None:
     sec["p_bh"] = multipletests(sec["p"], method="fdr_bh")[1]
     sec["family"] = "secondary"
     out = pd.concat([pd.DataFrame([main_r]), sec], ignore_index=True)
-    out.to_csv(TABLES / "iqr_assets.csv", index=False)
+    out.to_csv(TABLES / f"iqr_assets{sfx}.csv", index=False)
 
     log.info("[3/3] 요약")
     log.info("  주 검정: β=%.1f bp/%%p, p=%.4f, wild CI [%.1f, %.1f], 순열 p=%.4f → %s", main_r["beta"], main_r["p"],
@@ -149,10 +162,10 @@ def main() -> None:
     xx = np.linspace(dmain["iqr"].min(), dmain["iqr"].max(), 50)
     b, a = np.polyfit(dmain["iqr"], dmain["abs_ZT_win"], 1)
     ax.plot(xx, a + b * xx, color="#E07A28")
-    ax.set(xlabel="Kalshi implied IQR, day before (pp)", ylabel="|2Y futures return| 8:20–8:50 ET (bp)",
+    ax.set(xlabel="Kalshi implied IQR, " + ("day before" if mode == "daily" else "60 min before release") + " (pp)", ylabel="|2Y futures return| 8:20–8:50 ET (bp)",
            title=f"Headline CPI (n={len(dmain)}), β={b:.0f}, perm p={main_r['perm_p']:.3f}")
-    fig.savefig(FIGURES / "iqr_assets_main.png", dpi=180)
-    log.info("저장 outputs/tables/iqr_assets.csv, outputs/figures/iqr_assets_main.png")
+    fig.savefig(FIGURES / f"iqr_assets_main{sfx}.png", dpi=180)
+    log.info("저장 outputs/tables/iqr_assets%s.csv, outputs/figures/iqr_assets_main%s.png", sfx, sfx)
 
 
 if __name__ == "__main__":

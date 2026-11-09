@@ -10,7 +10,7 @@
   5. 거래 없는 5분 구간 비율 > max_empty_share인 날(휴일 단축장 등)은 결측 ※
   6. 연율화 변동성(%) = 100·√(252·RV) ※
 
-입력: config.yaml databento.out_file (04_databento_treasury.py 출력)
+입력: config.yaml databento(·databento_gap).out_file (04_databento_treasury.py 출력)
 출력: data/treasury_rv_daily.csv  (date, rv_ZT, vol_ZT, n_ZT, empty_ZT, rv_ZN, ...)
 실행: python src/05_treasury_rv.py
 """
@@ -57,12 +57,12 @@ def main() -> None:
     cfg = load_config()
     dcfg, rcfg = cfg["databento"], cfg["rv"]
     log = get_logger("05_treasury_rv")
-    path = ROOT / dcfg["out_file"]
-    if not path.exists():
-        raise FileNotFoundError(f"{path} 없음. src/04_databento_treasury.py를 먼저 실행해")
+    paths = [ROOT / cfg[b]["out_file"] for b in ["databento_gap", "databento"] if b in cfg and (ROOT / cfg[b]["out_file"]).exists()]
+    if not paths:
+        raise FileNotFoundError("국채선물 DBN 파일 없음. src/04_databento_treasury.py를 먼저 실행해")
 
-    log.info("[1/3] DBN 읽기: %s", path.name)
-    df = db.DBNStore.from_file(path).to_df(tz="America/Chicago")
+    log.info("[1/3] DBN 읽기: %s", [p.name for p in paths])
+    df = pd.concat([db.DBNStore.from_file(p).to_df(tz="America/Chicago") for p in paths]).sort_index()
     log.info("  1분봉 %d개, 종목 %s", len(df), sorted(df["symbol"].unique()))
 
     log.info("[2/3] 5분 실현변동성 (근월물 교체·장 휴식 갭 제외)")

@@ -37,13 +37,16 @@ def main() -> None:
     log = get_logger("hyp_00_event_windows")
     log.info("[1/3] 선물 1분봉 읽기 (동부시간 변환; 국채선물 + 있으면 ES·SR3)")
     bars = {}
-    for block in ["databento", "databento_extra"]:
+    frames = {}
+    for block in ["databento_gap", "databento", "databento_extra"]:
         path = DATA.parent / cfg[block]["out_file"]
         if not path.exists():
             log.info("  %s 없음 → 건너뜀", path.name)
             continue
         df = db.DBNStore.from_file(path).to_df(tz="America/New_York")
-        bars.update({s.split(".")[0]: g[["close", "instrument_id"]].sort_index() for s, g in df.groupby("symbol")})
+        for s, g in df.groupby("symbol"):
+            frames.setdefault(s.split(".")[0], []).append(g[["close", "instrument_id"]])
+    bars = {k: pd.concat(v).sort_index().loc[lambda x: ~x.index.duplicated()] for k, v in frames.items()}
     log.info("  %s", {k: len(v) for k, v in bars.items()})
 
     log.info("[2/3] 발표일 목록")

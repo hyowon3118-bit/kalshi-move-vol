@@ -25,13 +25,24 @@ databento:
   budget_usd: 125
   out_file: "data/raw/glbx_treasury_ohlcv1m.dbn.zst"
 
+# 국채선물 앞 구간 (2단계: 2022년부터 분석용). 기존 파일(2022-11~)과 겹치지 않게 그 앞만
+databento_gap:
+  dataset: "GLBX.MDP3"
+  symbols: ["ZT.v.0", "ZN.v.0"]
+  stype_in: "continuous"
+  schema: "ohlcv-1m"
+  start: "2021-06-01"
+  end: "2022-11-01"
+  budget_usd: 30
+  out_file: "data/raw/glbx_treasury_ohlcv1m_2021.dbn.zst"
+
 # 추가 종속변수 (꼬리 가설용): S&P500 선물(ES), 3개월 SOFR 선물(SR3, 연준 금리 경로 기대)
 databento_extra:
   dataset: "GLBX.MDP3"
   symbols: ["ES.v.0", "SR3.v.0"]
   stype_in: "continuous"
   schema: "ohlcv-1m"
-  start: "2022-11-01"
+  start: "2021-06-01"
   end: "2026-11-07"
   budget_usd: 60
   out_file: "data/raw/glbx_extra_ohlcv1m.dbn.zst"
