@@ -9,7 +9,12 @@
 | 준비 | `pip install -r requirements.txt` | |
 | 1 입력 | `python src/01_inputs.py` | `data/input/` (fixers26-1research의 정제된 Kalshi 분포 복사, MOVE 복사 또는 yfinance 다운로드) |
 | 2 패널 | `python src/02_daily_panel.py` | `data/daily_panel.parquet` |
-| 3 분석 | `python src/03_correlations.py` | `outputs/tables/corr_*.csv`, `outputs/figures/*.png` |
+| 3 분석(MOVE) | `python src/03_correlations.py --target MOVE` | `outputs/tables/MOVE_corr_*.csv`, `outputs/figures/MOVE_*.png` |
+| 4 국채선물 수집 | `python src/04_databento_treasury.py --cost-only` → 확인 후 `python src/04_databento_treasury.py` | `data/raw/glbx_treasury_ohlcv1m.dbn.zst` |
+| 5 실현변동성 | `python src/05_treasury_rv.py` | `data/treasury_rv_daily.csv` |
+| 6 분석(국채선물) | `python src/03_correlations.py --target ZT` (2년물), `--target ZN` (10년물) | `outputs/tables/ZT_corr_*.csv` 등 |
+
+Databento: `.env`에 `DATABENTO_API_KEY=db-...` (`.env.example` 참고). 4단계는 비용 조회(과금 없음) 후 `config.yaml`의 `budget_usd` 이하이고 파일이 아직 없을 때만 다운로드를 1회 호출해
 
 입력 경로는 `config.yaml`의 `source_repo` (기본 `../fixers26-1research`, 그 repo에서 `src/clean/01_kalshi_distributions.py`까지 실행돼 있어야 함)
 
@@ -19,8 +24,16 @@
 - 지표·날짜마다 만기가 가장 가까운 이벤트 하나 ※, MOVE 거래일만
 - `step`: 기준선 간격 중앙값 (계약 설계 변경 통제) ※
 
+## 국채선물 실현변동성 (05_treasury_rv.py)
+- CME Globex(GLBX.MDP3) 1분봉, 거래량 기준 연속 근월물 ZT.v.0(2년), ZN.v.0(10년)
+- 5분 로그수익률 제곱합 (Andersen–Bollerslev–Diebold–Labys 2003 정의, 5분 간격은 Liu–Patton–Sheppard 2015)
+- 거래일 = 시카고 시간 전날 17:00~당일 16:00 ※, 장 휴식·주말 갭 수익률 제외 ※
+- 근월물 교체 순간 수익률 제외 (원가격이라 교체 시 가짜 점프)
+- 거래 없는 5분 구간 50% 초과인 날 결측 ※, 연율화 100·√(252·RV) ※
+
 ## 분석
 - A 수준 상관 (참고용, 추세 때문에 가성 상관 가능), B 남은 일수 통제
 - C 일별 변화 상관 (주 결과, 같은 이벤트 안 변화만, Newey–West HAC)
-- D 이벤트 단위: 만기 h일 전(7, 1) 분포 vs 그날 MOVE, 기준선 간격·시간 추세 통제 편상관
+- D 이벤트 단위: 발표 h일 전(7, 1) 분포 vs 그날 변동성, 기준선 간격·시간 추세 통제 편상관
+- E (국채선물만) 발표 h일 전 분포 → 발표 당일 실현변동성, 평상시 변동성(직전 5거래일)·간격·추세 통제
 - 다중검정 Benjamini–Hochberg

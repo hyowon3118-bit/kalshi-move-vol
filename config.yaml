@@ -13,3 +13,20 @@ event_level:
 
 move:
   start: "2021-12-01"
+
+# 국채선물 실현변동성 (Databento). 04_databento_treasury.py는 비용 조회 후 budget_usd 이하일 때만 다운로드를 1번 호출
+databento:
+  dataset: "GLBX.MDP3"           # CME Globex
+  symbols: ["ZT.v.0", "ZN.v.0"]  # 2년물·10년물 선물, 거래량 기준 연속 근월물
+  stype_in: "continuous"
+  schema: "ohlcv-1m"
+  start: "2022-11-01"            # Kalshi 분포 시작(2022-12)보다 한 달 앞
+  end: "2026-11-07"
+  budget_usd: 125
+  out_file: "data/raw/glbx_treasury_ohlcv1m.dbn.zst"
+
+rv:
+  bar_minutes: 5                 # Liu, Patton & Sheppard (2015): 5분 RV를 이기기 어렵다
+  session_end_ct: "16:00"        # CME 거래일: 시카고 시간 전날 17:00 ~ 당일 16:00 ※
+  max_empty_share: 0.5           # 거래 없는 5분 구간이 이 비율 초과인 날은 결측 ※
+  pre_days: 5                    # 이벤트 분석에서 발표 전 평상시 변동성 통제용 (직전 5거래일 평균 RV) ※

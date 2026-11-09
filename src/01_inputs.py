@@ -1,10 +1,10 @@
 """1단계: 입력 자료 준비.
 
-- Kalshi: fixers26-1research가 만든 data/interim/kalshi_dist.parquet, kalshi_moments.parquet 복사
+- Kalshi: fixers26-1research가 만든 data/interim/kalshi_dist.parquet, kalshi_moments.parquet, kalshi_events.parquet(발표일) 복사
           (연준 DKW 방식으로 만든 일별 확률분포와 적률. 다시 수집하지 않음)
 - MOVE: fixers26-1research의 data/raw/move/move_daily.csv가 있으면 복사, 없으면 yfinance(^MOVE)로 다운로드
 
-출력: data/input/kalshi_dist.parquet, kalshi_moments.parquet, move_daily.csv
+출력: data/input/kalshi_*.parquet, move_daily.csv
 실행: python src/01_inputs.py
 """
 from __future__ import annotations
@@ -26,7 +26,7 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
 
     log.info("[1/2] Kalshi 분포 복사 (원본: %s)", src)
-    for name in ["kalshi_dist.parquet", "kalshi_moments.parquet"]:
+    for name in ["kalshi_dist.parquet", "kalshi_moments.parquet", "kalshi_events.parquet"]:
         f = src / "data" / "interim" / name
         if not f.exists():
             raise FileNotFoundError(f"{f} 없음. fixers26-1research에서 src/clean/01_kalshi_distributions.py를 먼저 실행해")

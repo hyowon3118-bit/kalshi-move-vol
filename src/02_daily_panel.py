@@ -4,6 +4,7 @@
   sd      분포 표준편차 = √variance (DKW 적률)
   H       섀넌 엔트로피 −Σ p_j ln p_j (p_j: 각 구간 확률, 0인 구간은 기여 0)
   H_norm  H / ln J (J: 그 분포의 구간 수). 이벤트마다 기준선 개수가 달라서 정규화 ※
+  days_to_release 발표일까지 남은 일수 (발표일은 Kalshi 이벤트 마감일, kalshi_events.parquet)
   days_to_expiry  만기까지 남은 일수 (발표가 가까워지면 분포가 저절로 좁아지는 효과 통제용)
   step    기준선 간격 중앙값 (계약 설계 변경 통제용) ※
   traded  그날 Kalshi 거래량 > min_volume (거래 없는 날은 DKW 방식상 전날 가격을 이어 씀)
@@ -61,6 +62,11 @@ def main() -> None:
     n_before = len(mom)
     mom = mom.sort_values(["series", "date", "days_to_expiry"]).drop_duplicates(["series", "date"], keep="first")
     log.info("  %d행 → %d행 (같은 날 여러 이벤트면 만기 가까운 것)", n_before, len(mom))
+    ev = pd.read_parquet(inp / "kalshi_events.parquet")[["event_ticker", "release_date_et"]]
+    ev["release_date"] = pd.to_datetime(ev["release_date_et"])
+    mom = mom.merge(ev[["event_ticker", "release_date"]], left_on="contract_preamble", right_on="event_ticker", how="left")
+    mom["days_to_release"] = (mom["release_date"] - mom["date"]).dt.days
+    log.info("  발표일 연결 안 된 행 %d", int(mom["release_date"].isna().sum()))
     mom["sd"] = np.sqrt(mom["variance"])
     mom["traded"] = mom["daily_volume"] > cfg["daily"]["min_volume"]
 
@@ -78,7 +84,7 @@ def main() -> None:
                  s, len(g), g["date"].min().date(), g["date"].max().date(),
                  g["contract_preamble"].nunique(), 100 * g["traded"].mean(), int(g["d_sd"].notna().sum()))
     panel = pd.concat(rows, ignore_index=True)
-    cols = ["series", "date", "contract_preamble", "expiry_date", "days_to_expiry", "daily_volume", "traded",
+    cols = ["series", "date", "contract_preamble", "release_date", "days_to_release", "expiry_date", "days_to_expiry", "daily_volume", "traded",
             "sd", "H", "H_norm", "J", "step", "MOVE", "dMOVE", "d_sd", "d_H", "d_H_norm"]
     panel[cols].to_parquet(DATA / "daily_panel.parquet", index=False)
     log.info("저장 data/daily_panel.parquet (%d행)", len(panel))
