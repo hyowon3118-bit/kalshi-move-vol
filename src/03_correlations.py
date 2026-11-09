@@ -99,7 +99,7 @@ def partial_corr(g: pd.DataFrame, m: str, y: str, extra: list[str] | None = None
     C = pd.DataFrame({"lstep": np.log(d["step"]), "t": (d["date"] - d["date"].min()).dt.days / 365.25})
     for e in extra:
         C[e] = d[e]
-    C = sm.add_constant(C.loc[:, C.std() > 0])
+    C = sm.add_constant(C.loc[:, C.std() > 1e-8])  # 간격이 고정인 지표(CPI 0.1)는 부동소수점 오차로 std가 0이 아니게 나와서 허용오차 둠
     rx = sm.OLS(d[m], C).fit().resid
     ry = sm.OLS(d[y], C).fit().resid
     r, _ = stats.pearsonr(rx, ry)
