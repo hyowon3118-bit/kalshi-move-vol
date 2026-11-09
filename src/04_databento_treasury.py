@@ -11,6 +11,7 @@ API 키: 환경변수 DATABENTO_API_KEY 또는 repo 루트 .env 파일 (DATABENT
 
 실행: python src/04_databento_treasury.py            (비용 확인 후 예산 안이면 다운로드)
       python src/04_databento_treasury.py --cost-only (비용만 확인)
+      python src/04_databento_treasury.py --block databento_extra [--cost-only]  (ES·SR3 추가 종속변수)
 """
 from __future__ import annotations
 
@@ -38,8 +39,9 @@ def load_key() -> str:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--cost-only", action="store_true", help="비용만 조회하고 다운로드하지 않음")
+    ap.add_argument("--block", default="databento", help="config.yaml 블록 (databento | databento_extra)")
     args = ap.parse_args()
-    cfg = load_config()["databento"]
+    cfg = load_config()[args.block]
     log = get_logger("04_databento_treasury")
     out = ROOT / cfg["out_file"]
     req = dict(dataset=cfg["dataset"], symbols=cfg["symbols"], stype_in=cfg["stype_in"],

@@ -9,8 +9,8 @@
   post  8:30 → 8:50  발표 후 20분 (Balduzzi·Elton·Green 2001: 조정은 대체로 1분 안에 끝남 → 여유 있게 20분)
   win   8:20 → 8:50  발표를 포함한 30분 (발표 10분 전 ~ 20분 후)
 
-입력: data/raw/glbx_treasury_ohlcv1m.dbn.zst, data/input/event_panel.parquet
-출력: data/event_windows.csv (date, {ZT,ZN}_{pre,post,win})
+입력: data/raw/glbx_treasury_ohlcv1m.dbn.zst (+ glbx_extra_ohlcv1m.dbn.zst 있으면), data/input/event_panel.parquet
+출력: data/event_windows.csv (date, {ZT,ZN,ES,SR3}_{pre,post,win})
 실행: python src/hyp/00_event_windows.py
 """
 from __future__ import annotations
@@ -35,10 +35,15 @@ def price_at(bars: pd.DataFrame, t: pd.Timestamp) -> tuple[float, float]:
 def main() -> None:
     cfg = load_config()
     log = get_logger("hyp_00_event_windows")
-    path = DATA.parent / cfg["databento"]["out_file"]
-    log.info("[1/3] 선물 1분봉 읽기 (동부시간 변환)")
-    df = db.DBNStore.from_file(path).to_df(tz="America/New_York")
-    bars = {s.split(".")[0]: g[["close", "instrument_id"]].sort_index() for s, g in df.groupby("symbol")}
+    log.info("[1/3] 선물 1분봉 읽기 (동부시간 변환; 국채선물 + 있으면 ES·SR3)")
+    bars = {}
+    for block in ["databento", "databento_extra"]:
+        path = DATA.parent / cfg[block]["out_file"]
+        if not path.exists():
+            log.info("  %s 없음 → 건너뜀", path.name)
+            continue
+        df = db.DBNStore.from_file(path).to_df(tz="America/New_York")
+        bars.update({s.split(".")[0]: g[["close", "instrument_id"]].sort_index() for s, g in df.groupby("symbol")})
     log.info("  %s", {k: len(v) for k, v in bars.items()})
 
     log.info("[2/3] 발표일 목록")
