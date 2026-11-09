@@ -1,0 +1,15 @@
+# 입력: fixers26-1research에서 정제한 Kalshi 분포 (DKW 방식). 이 repo 기준 상대경로 또는 절대경로
+source_repo: "../fixers26-1research"
+
+series: [KXCPI, KXCPICORE, KXGDP, KXPAYROLLS, KXU3]
+
+daily:
+  min_volume: 0            # 그날 Kalshi 거래량이 이 값 초과인 날만 쓰는 강건성 분석 (0 → 거래 있는 날만)
+  max_days_to_expiry: 30   # 원 정제 설정과 같음 (만기 30일 전부터 분포 존재)
+
+event_level:
+  horizons: [7, 1]         # 만기 h일 전 분포로 이벤트 단위 상관
+  max_stale_days: 3        # h일 전 이하에서 가장 가까운 관측이 이보다 오래되면 제외
+
+move:
+  start: "2021-12-01"

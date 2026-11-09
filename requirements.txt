@@ -1,0 +1,8 @@
+pandas>=2.0
+pyarrow>=14.0
+pyyaml>=6.0
+numpy>=1.24
+scipy>=1.10
+statsmodels>=0.14
+matplotlib>=3.8
+yfinance>=0.2
