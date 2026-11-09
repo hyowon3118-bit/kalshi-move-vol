@@ -4,7 +4,7 @@
           (연준 DKW 방식으로 만든 일별 확률분포와 적률. 다시 수집하지 않음)
 - MOVE: fixers26-1research의 data/raw/move/move_daily.csv가 있으면 복사, 없으면 yfinance(^MOVE)로 다운로드
 
-출력: data/input/kalshi_*.parquet, move_daily.csv
+출력: data/input/kalshi_*.parquet, event_panel.parquet, rq1_oos_predictions.parquet, move_daily.csv
 실행: python src/01_inputs.py
 """
 from __future__ import annotations
@@ -32,6 +32,15 @@ def main() -> None:
             raise FileNotFoundError(f"{f} 없음. fixers26-1research에서 src/clean/01_kalshi_distributions.py를 먼저 실행해")
         shutil.copy2(f, out / name)
         log.info("  %s: %d행", name, len(pd.read_parquet(out / name)))
+
+    log.info("  가설 검증용 이벤트 패널 (fixers26-1research data/processed)")
+    for name in ["event_panel.parquet", "rq1_oos_predictions.parquet"]:
+        f = src / "data" / "processed" / name
+        if f.exists():
+            shutil.copy2(f, out / name)
+            log.info("  %s: %d행", name, len(pd.read_parquet(out / name)))
+        else:
+            log.warning("  %s 없음 (fixers26-1research에서 01_event_panel.py, rq1_forecast.py 실행 필요). src/hyp 가설 검증에만 필요", name)
 
     log.info("[2/2] MOVE 일별")
     f = src / "data" / "raw" / "move" / "move_daily.csv"

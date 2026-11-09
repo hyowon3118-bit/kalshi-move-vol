@@ -37,3 +37,18 @@ Databento: `.env`에 `DATABENTO_API_KEY=db-...` (`.env.example` 참고). 4단계
 - D 이벤트 단위: 발표 h일 전(7, 1) 분포 vs 그날 변동성, 기준선 간격·시간 추세 통제 편상관
 - E (국채선물만) 발표 h일 전 분포 → 발표 당일 실현변동성, 평상시 변동성(직전 5거래일)·간격·추세 통제
 - 다중검정 Benjamini–Hochberg
+
+## 가설 검증 (src/hyp, 2026-11-09)
+실행: `python src/01_inputs.py` (event_panel·RQ1 예측 복사) → `python src/hyp/00_event_windows.py` → `python src/hyp/run_all.py`
+발표 시각 8:30 ET 전후 국채선물 수익률: pre 8:00→8:30, post 8:30→8:50, win 8:20→8:50 ※
+
+| 파일 | 가설 | 근거 |
+|---|---|---|
+| hA_surprise_size.py | 서프라이즈가 클수록 발표 구간 선물 변동 큼 | Balduzzi, Elton & Green (2001) |
+| hB_pre_drift.py | 발표 전 30분 드리프트 (서프라이즈·Kalshi 괴리 방향) | Kurov et al. (2019), Kalshi 확장 ※ |
+| hC_priced_in.py | 발표 구간 반응 = Kalshi 예측분(c1) + 예측 못 한 부분(c2) | Campbell & Sharpe 분해의 분 단위 적용 ※ |
+| hD_uncertainty_interaction.py | 분포가 넓을수록 서프라이즈 반응 큼 | Pasquariello & Vega (2007) 간접 ※ |
+| hE_vol_resolution.py | 분포가 넓을수록 발표 후 변동성 더 하락 | Beber & Brandt (2009)의 실현변동성 버전 ※ |
+| hF_skew_direction.py | 분포 왜도 방향으로 발표치 | 선행연구 없음 ※ |
+
+주 검정 16개를 한꺼번에 Benjamini–Hochberg 보정 (`outputs/tables/hyp_summary.csv`)
